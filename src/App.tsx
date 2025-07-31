@@ -91,7 +91,7 @@ function App() {
           <Features />
           <InstallCommand />
           
-          <QuickstartSection>
+          <QuickstartSection id="auth-selection">
             <QuickstartContainer>
               <ProviderSelector
                 selectedProviders={selectedProviders}
