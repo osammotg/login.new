@@ -7,10 +7,9 @@ const HeaderContainer = styled.header`
   left: 0;
   right: 0;
   z-index: 100;
-  background-color: ${theme.colors.background};
+  background: rgba(11, 15, 30, 0.8);
+  backdrop-filter: blur(20px);
   border-bottom: 1px solid ${theme.colors.border};
-  backdrop-filter: blur(10px);
-  background-color: rgba(15, 15, 35, 0.8);
 `
 
 const HeaderContent = styled.div`
@@ -37,6 +36,10 @@ const LogoText = styled.h1`
   font-weight: ${theme.typography.fontWeight.bold};
   color: ${theme.colors.text};
   margin: 0;
+  background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary});
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 `
 
 const Tagline = styled.span`
@@ -57,9 +60,12 @@ const NavLink = styled.a`
   font-weight: ${theme.typography.fontWeight.medium};
   transition: color 0.2s ease;
   cursor: pointer;
-
+  padding: ${theme.spacing.sm} ${theme.spacing.md};
+  border-radius: ${theme.borderRadius.md};
+  
   &:hover {
     color: ${theme.colors.text};
+    background: rgba(139, 94, 255, 0.1);
   }
 `
 

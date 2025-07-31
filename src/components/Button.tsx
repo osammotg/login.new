@@ -14,7 +14,7 @@ export const Button = styled.button<ButtonProps>`
   font-family: ${theme.typography.fontFamily.primary};
   font-weight: ${theme.typography.fontWeight.semibold};
   border-radius: ${theme.borderRadius.lg};
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
   cursor: pointer;
   border: none;
   outline: none;
@@ -54,6 +54,7 @@ export const Button = styled.button<ButtonProps>`
           &:hover:not(:disabled) {
             border-color: ${theme.colors.primary};
             color: ${theme.colors.primary};
+            transform: translateY(-2px);
           }
         `
       case 'disabled':
@@ -67,10 +68,26 @@ export const Button = styled.button<ButtonProps>`
         return `
           background: linear-gradient(135deg, ${theme.colors.primary}, ${theme.colors.secondary});
           color: ${theme.colors.text};
+          box-shadow: 0 4px 14px rgba(139, 94, 255, 0.3);
+          
+          &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+          }
           
           &:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: ${theme.shadows.lg};
+            box-shadow: 0 8px 25px rgba(139, 94, 255, 0.4);
+            
+            &::before {
+              left: 100%;
+            }
           }
           
           &:active:not(:disabled) {
