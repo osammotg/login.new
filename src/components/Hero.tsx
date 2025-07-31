@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
 import { theme } from '../styles/theme';
+import { TestimonialSlider } from './TestimonialSlider';
 
 /* ——— Styled Components (existing) ——— */
 const HeroSection = styled.section`
   background: linear-gradient(135deg, ${theme.colors.background} 0%, #1A1F2E 100%);
   min-height: 100vh;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   position: relative;
@@ -36,13 +38,18 @@ const HeroContent = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   min-height: 100vh;
   padding-top: 15vh;
+  padding-bottom: 2rem;
 `;
 
 const TextContainer = styled.div`
   margin-bottom: ${theme.spacing['3xl']};
+`;
+
+const ButtonContainer = styled.div`
+  margin-bottom: ${theme.spacing['4xl']};
 `;
 
 const HeroTitle = styled.h1`
@@ -155,21 +162,23 @@ const StarTrail = styled.div<{ x: number; y: number; angle: number }>`
   transform: rotate(${props => props.angle}deg);
   pointer-events: none;
   z-index: 1;
+  box-shadow: 0 0 8px ${theme.colors.accent};
   
   &::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 200px;
+    width: 300px;
     height: 2px;
     background: linear-gradient(90deg, ${theme.colors.accent}, transparent);
     transform: translate(-50%, -50%);
     transform-origin: left center;
+    box-shadow: 0 0 4px ${theme.colors.accent};
   }
 `;
 
-const FloatingStars = styled.div`
+const FloatingStars = styled.div<{ isPaused: boolean }>`
   position: absolute;
   top: 0;
   left: 0;
@@ -177,9 +186,10 @@ const FloatingStars = styled.div`
   height: 100%;
   pointer-events: none;
   z-index: 1;
+  animation-play-state: ${props => props.isPaused ? 'paused' : 'running'};
 `;
 
-const Star = styled.div<{ x: number; y: number; delay: number }>`
+const Star = styled.div<{ x: number; y: number; delay: number; isPaused: boolean }>`
   position: absolute;
   width: 2px;
   height: 2px;
@@ -189,6 +199,7 @@ const Star = styled.div<{ x: number; y: number; delay: number }>`
   top: ${props => props.y}%;
   animation: twinkle 3s ease-in-out infinite;
   animation-delay: ${props => props.delay}s;
+  animation-play-state: ${props => props.isPaused ? 'paused' : 'running'};
   opacity: 0.7;
   filter: brightness(0.7);
   
@@ -217,6 +228,7 @@ export const Hero = () => {
   const [buttonStars, setButtonStars] = useState<ButtonStar[]>([]);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isMouseInSection, setIsMouseInSection] = useState(false);
+  const [isButtonHovered, setIsButtonHovered] = useState(false);
   const sectionRef = useRef<HTMLElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const starIdRef = useRef(0);
@@ -247,22 +259,60 @@ export const Hero = () => {
     }, 1000);
   };
 
+  const handleButtonMouseEnter = () => {
+    setIsButtonHovered(true);
+    setStars([]); // Clear any existing star trails
+    setIsMouseInSection(false); // Stop mouse tracking
+    createButtonStarRays();
+  };
+
+  const handleButtonMouseLeave = () => {
+    setIsButtonHovered(false);
+    setButtonStars([]);
+  };
+
   useEffect(() => {
     const section = sectionRef.current;
     const button = buttonRef.current;
     
     if (!section || !button) return;
 
+    let mouseThrottle: number;
+    let lastStarTime = 0;
+    const STAR_INTERVAL = 200; // Time between star sequences
+    let isCreatingSequence = false;
+
     const handleMouseMove = (e: MouseEvent) => {
-      const rect = section.getBoundingClientRect();
-      setMousePosition({
-        x: e.clientX - rect.left,
-        y: e.clientY - rect.top
+      // Don't track mouse if button is hovered
+      if (isButtonHovered) return;
+      
+      // Throttle mouse movement for optimal performance
+      if (mouseThrottle) return;
+      
+      mouseThrottle = requestAnimationFrame(() => {
+        const rect = section.getBoundingClientRect();
+        const newPosition = {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+        
+        setMousePosition(newPosition);
+        
+        // Create star sequence only if enough time has passed and not already creating
+        const now = Date.now();
+        if (isMouseInSection && now - lastStarTime > STAR_INTERVAL && !isCreatingSequence) {
+          createStarSequence(newPosition);
+          lastStarTime = now;
+        }
+        
+        mouseThrottle = 0;
       });
     };
 
     const handleMouseEnter = () => {
-      setIsMouseInSection(true);
+      if (!isButtonHovered) {
+        setIsMouseInSection(true);
+      }
     };
 
     const handleMouseLeave = () => {
@@ -270,40 +320,53 @@ export const Hero = () => {
       setStars([]);
     };
 
-    const createStar = () => {
-      if (!isMouseInSection || !button) return;
+    const createStarSequence = (position: { x: number; y: number }) => {
+      if (!button || isButtonHovered) return;
 
+      isCreatingSequence = true;
       const buttonRect = button.getBoundingClientRect();
       const sectionRect = section.getBoundingClientRect();
       
       const buttonCenterX = buttonRect.left - sectionRect.left + buttonRect.width / 2;
       const buttonCenterY = buttonRect.top - sectionRect.top + buttonRect.height / 2;
       
-      const dx = buttonCenterX - mousePosition.x;
-      const dy = buttonCenterY - mousePosition.y;
+      const dx = buttonCenterX - position.x;
+      const dy = buttonCenterY - position.y;
       const angle = Math.atan2(dy, dx) * 180 / Math.PI;
 
-      const newStar: Star = {
-        id: starIdRef.current++,
-        x: mousePosition.x,
-        y: mousePosition.y,
-        angle,
-        opacity: 1
-      };
+      // Create 5 stars simultaneously
+      const newStars: Star[] = [];
+      for (let i = 0; i < 5; i++) {
+        newStars.push({
+          id: starIdRef.current++,
+          x: position.x,
+          y: position.y,
+          angle,
+          opacity: 1
+        });
+      }
 
-      setStars(prev => [...prev, newStar]);
+      // Add all stars at once
+      setStars(prev => {
+        const updatedStars = [...prev, ...newStars];
+        if (updatedStars.length > 15) {
+          return updatedStars.slice(-15);
+        }
+        return updatedStars;
+      });
 
-      // Animate star
+      // Remove stars one after another
+      newStars.forEach((star, index) => {
+        setTimeout(() => {
+          setStars(prev => prev.filter(s => s.id !== star.id));
+        }, 800 + (index * 200)); // 800ms base + 200ms delay per star
+      });
+
+      // Reset sequence flag after all stars are created
       setTimeout(() => {
-        setStars(prev => prev.filter(star => star.id !== newStar.id));
-      }, 1000);
+        isCreatingSequence = false;
+      }, 500);
     };
-
-    let starInterval: number;
-    
-    if (isMouseInSection) {
-      starInterval = setInterval(createStar, 100);
-    }
 
     section.addEventListener('mousemove', handleMouseMove);
     section.addEventListener('mouseenter', handleMouseEnter);
@@ -313,18 +376,24 @@ export const Hero = () => {
       section.removeEventListener('mousemove', handleMouseMove);
       section.removeEventListener('mouseenter', handleMouseEnter);
       section.removeEventListener('mouseleave', handleMouseLeave);
-      if (starInterval) clearInterval(starInterval);
+      if (mouseThrottle) cancelAnimationFrame(mouseThrottle);
     };
-  }, [isMouseInSection, mousePosition]);
+  }, [isMouseInSection, isButtonHovered]);
 
   return (
     <HeroSection ref={sectionRef}>
-      <FloatingStars>
+      <FloatingStars isPaused={isButtonHovered}>
         {backgroundStars.map((star, index) => (
-          <Star key={index} x={star.x} y={star.y} delay={star.delay} />
+          <Star 
+            key={index} 
+            x={star.x} 
+            y={star.y} 
+            delay={star.delay} 
+            isPaused={isButtonHovered}
+          />
         ))}
       </FloatingStars>
-      {stars.map(star => (
+      {!isButtonHovered && stars.map(star => (
         <StarTrail
           key={star.id}
           x={star.x}
@@ -348,13 +417,18 @@ export const Hero = () => {
           <HeroTitle>Fast, secure, open-source authentication.</HeroTitle>
           <HeroSubtitle>Do auth in minutes.</HeroSubtitle>
         </TextContainer>
-        <HeroButton 
-          ref={buttonRef}
-          onClick={() => document.getElementById('quickstart')?.scrollIntoView({ behavior: 'smooth' })}
-          onMouseEnter={createButtonStarRays}
-        >
-          Get Started →
-        </HeroButton>
+        <ButtonContainer>
+          <HeroButton 
+            ref={buttonRef}
+            onClick={() => document.getElementById('quickstart')?.scrollIntoView({ behavior: 'smooth' })}
+            onMouseEnter={handleButtonMouseEnter}
+            onMouseLeave={handleButtonMouseLeave}
+          >
+            Get Started →
+          </HeroButton>
+        </ButtonContainer>
+        <TestimonialSlider />
+
       </HeroContent>
       
       <style>
