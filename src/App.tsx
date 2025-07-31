@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Header } from './components/Header'
+import { Footer } from './components/Footer'
 import { Hero } from './components/Hero'
 import { Features } from './components/Features'
 import { InstallCommand } from './components/InstallCommand'
@@ -18,6 +19,10 @@ const AppContainer = styled.div`
   min-height: 100vh;
   background-color: ${theme.colors.background};
   width: 100vw;
+`
+
+const MainContent = styled.main`
+  width: 100%;
 `
 
 const QuickstartSection = styled.section`
@@ -81,20 +86,23 @@ function App() {
       <GlobalStyles />
       <AppContainer>
         <Header />
-        <Hero />
-        <Features />
-        <InstallCommand />
-        
-        <QuickstartSection>
-          <QuickstartContainer>
-            <ProviderSelector
-              selectedProviders={selectedProviders}
-              onProviderToggle={toggleProvider}
-              showOptions={showOptions}
-              onGenerateOptions={handleGenerateAuth}
-            />
-          </QuickstartContainer>
-        </QuickstartSection>
+        <MainContent id="quickstart">
+          <Hero />
+          <Features />
+          <InstallCommand />
+          
+          <QuickstartSection>
+            <QuickstartContainer>
+              <ProviderSelector
+                selectedProviders={selectedProviders}
+                onProviderToggle={toggleProvider}
+                showOptions={showOptions}
+                onGenerateOptions={handleGenerateAuth}
+              />
+            </QuickstartContainer>
+          </QuickstartSection>
+        </MainContent>
+        <Footer />
       </AppContainer>
     </>
   )
