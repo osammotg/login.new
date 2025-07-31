@@ -47,31 +47,6 @@ const QuickstartContainer = styled.div`
   z-index: 1;
 `
 
-const ActionContainer = styled.div`
-  margin-top: ${theme.spacing['2xl']};
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: ${theme.spacing.lg};
-`
-
-const ErrorMessage = styled.div`
-  color: ${theme.colors.error};
-  font-size: ${theme.typography.fontSize.sm};
-  padding: ${theme.spacing.md} ${theme.spacing.lg};
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: ${theme.borderRadius.lg};
-  max-width: 500px;
-  margin: 0 auto;
-  backdrop-filter: blur(10px);
-  
-  &::before {
-    content: '⚠️';
-    margin-right: ${theme.spacing.sm};
-  }
-`
-
 const ResultsContainer = styled.div`
   margin-top: ${theme.spacing['3xl']};
   display: flex;
@@ -86,6 +61,7 @@ function App() {
   const { selectedProviders, toggleProvider, hasSelection } = useProviderSelection()
   const { isCopied, copyToClipboard } = useClipboard()
   const [showInstructions, setShowInstructions] = useState(false)
+  const [showOptions, setShowOptions] = useState(false)
 
   const generatedCommand = buildCommand(selectedProviders)
 
@@ -93,7 +69,7 @@ function App() {
     if (!hasSelection) {
       return
     }
-    setShowInstructions(true)
+    setShowOptions(true)
   }
 
   const handleCopyCommand = () => {
@@ -108,41 +84,15 @@ function App() {
         <Hero />
         <Features />
         <InstallCommand />
+        
         <QuickstartSection>
           <QuickstartContainer>
             <ProviderSelector
               selectedProviders={selectedProviders}
               onProviderToggle={toggleProvider}
+              showOptions={showOptions}
+              onGenerateOptions={handleGenerateAuth}
             />
-            
-            <ActionContainer>
-              <Button
-                variant={hasSelection ? 'primary' : 'disabled'}
-                size="lg"
-                disabled={!hasSelection}
-                onClick={handleGenerateAuth}
-                className={hasSelection ? 'glow' : ''}
-              >
-                {hasSelection ? 'Generate My Auth' : 'Please choose a method'}
-              </Button>
-              
-              {!hasSelection && (
-                <ErrorMessage>
-                  Please select at least one authentication provider to continue.
-                </ErrorMessage>
-              )}
-            </ActionContainer>
-
-            {showInstructions && (
-              <ResultsContainer className="fade-in-up">
-                <CommandGenerator
-                  command={generatedCommand}
-                  onCopy={handleCopyCommand}
-                  isCopied={isCopied}
-                />
-                <Instructions isVisible={showInstructions} />
-              </ResultsContainer>
-            )}
           </QuickstartContainer>
         </QuickstartSection>
       </AppContainer>
