@@ -123,7 +123,7 @@ function App() {
                 onClick={handleGenerateAuth}
                 className={hasSelection ? 'glow' : ''}
               >
-                Generate My Auth
+                {hasSelection ? 'Generate My Auth' : 'Please choose a method'}
               </Button>
               
               {!hasSelection && (
